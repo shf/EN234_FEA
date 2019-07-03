@@ -125,7 +125,7 @@
 %      Nodal variables are printed as
 %         X, Y, (Z), Ux, Uy, (Uz), Projected states.
 %         Standard continuum elements allow you to print stresses (Sij), strains (Eij), and any material state variables Un if the material has state variables
-         PRINT STATE, Output_files\contourplots.dat
+         PRINT STATE, Output_files/contourplots.dat
             DEGREES OF FREEDOM
             FIELD VARIABLES, S11,S22,S33,S12,S13,S23
             DISPLACED MESH
@@ -133,7 +133,7 @@
          END PRINT STATE
 
          USER PRINT FILES
-              Output_files\McCormick_stressvstrain.dat
+              Output_files/McCormick_stressvstrain.dat
          END USER PRINT FILES
          USER PRINT PARAMETERS
                 9 % Specify the HW problem number

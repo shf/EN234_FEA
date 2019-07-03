@@ -109,7 +109,7 @@
 
 %  Print the initial mesh to a file named initial_mesh.dat
 
-   PRINT INITIAL MESH, Output_files\initial_mesh.dat
+   PRINT INITIAL MESH, Output_files/initial_mesh.dat
 
 %   TIME, VALUE, 0.d0        % Use this to specify the initial time
 %   TIME, INCREMENT, 0.01d0  % Use this to specify a time increment (often needed for check stiffness)
@@ -147,8 +147,8 @@
          SOLVER, DIRECT, NONLINEAR, 1.d-05,15
 
          USER PRINT FILES
-             Output_files\beam_displacements.dat
-             Output_files\beam_forces.dat
+             Output_files/beam_displacements.dat
+             Output_files/beam_forces.dat
          END USER PRINT FILES
          USER PRINT PARAMETERS
                 10 % Specify the HW problem number
