@@ -8,8 +8,8 @@ module ParamIO
   ! --  Unit to use for intput file
   integer, parameter :: IOR = 2
   ! --  Parameter specifying operating system type.  0 for UNIX, 1 for Windows
-  integer, parameter :: IOPSYS = 1
-  integer, parameter :: IWT = 1
+  integer, parameter :: IOPSYS = 0
+  integer, parameter :: IWT = 0
   
   logical, parameter :: echo = .false.           ! Set to .true. to echo lines of input file
   
