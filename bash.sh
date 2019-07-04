@@ -26,6 +26,9 @@ gfortran -J$OBJ -c $MOD/User_Subroutine_Storage.f90 -o $OBJ/User_Subroutine_Stor
 
 gfortran -J$OBJ -c $USRMOD/Element_Utilities.f90 -o $OBJ/Element_Utilities.o
 
+cp $USRSRC/aba_param.inc $OBJ
+cp $USRSRC/vaba_param.inc $OBJ
+
 cd $OBJ
 
 gfortran -c $USRSRC/*.f90 -I$OBJ
