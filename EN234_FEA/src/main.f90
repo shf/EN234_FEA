@@ -5,8 +5,8 @@ program en234fea
   use Controlparameters
   implicit none
  
-  character (len=100) :: VS_root_folder
-  character (len=100) :: Eclipse_root_folder
+  character (len=200) :: VS_root_folder
+  character (len=200) :: Eclipse_root_folder
 
 
   VS_root_folder = '../'   ! This should work with Intel Studio on the remote desktop if you follow the instructions for cloning your EN234FEA fork 

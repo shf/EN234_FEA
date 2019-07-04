@@ -19,8 +19,8 @@ module ParamIO
   character ( len = 100 ) :: strpar(100)
   integer :: ityp(100), lenstr(100)
 
-  character ( len = 100 ) :: infil, outfil
-  character ( len = 100 ) :: root_directory
+  character ( len = 200 ) :: infil, outfil
+  character ( len = 200 ) :: root_directory
   
 
 end module ParamIO
