@@ -41,3 +41,4 @@ gfortran -o main *.o
 $OBJ/main
 
 code $OBJ/*.out
+code $OBJ/contourplots.dat

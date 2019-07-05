@@ -11,7 +11,7 @@
 !          abq_UEL_1D_integrationpoints(n_points, n_nodes, xi, w)  = defines integration points for 1D line integral
 !=========================== ABAQUS format user element subroutine ===================
 
-      SUBROUTINE UEL_2D(RHS,AMATRX,SVARS,ENERGY,NDOFEL,NRHS,NSVARS,
+      SUBROUTINE UEL(RHS,AMATRX,SVARS,ENERGY,NDOFEL,NRHS,NSVARS,
      1     PROPS,NPROPS,COORDS,MCRD,NNODE,U,DU,V,A,JTYPE,TIME,DTIME,
      2     KSTEP,KINC,JELEM,PARAMS,NDLOAD,JDLTYP,ADLMAG,PREDEF,NPREDF,
      3     LFLAGS,MLVARX,DDLMAG,MDLOAD,PNEWDT,JPROPS,NJPROP,PERIOD)
@@ -162,6 +162,7 @@
       kaa = 0.d0
       kua = 0.d0
       rhs_temp = 0.D0
+      ktemp = 0.D0
 	  
       D = 0.d0
       E = PROPS(1)
@@ -250,6 +251,8 @@
         B(4,2*NNODE+3) = B(2,(2*NNODE)+4)
         B(4,2*NNODE+4) = B(1,(2*NNODE)+3)
 
+!        write(IOW,*) ktemp(4,4)
+
         ktemp(1:2*NNODE+4,1:2*NNODE+4)=ktemp(1:2*NNODE+4,1:(2*NNODE)+4) 
      1   + matmul(transpose(B(1:4,1:2*NNODE+4)),
      2     matmul(D,B(1:4,1:2*NNODE+4)))*w(kint)*determinant
@@ -262,6 +265,14 @@
       kua(1:2*NNODE,1:4)= ktemp(1:2*NNODE,2*NNODE+1:2*NNODE+4)
 
       call abq_inverse_LU(kaa,kaainv,4)
+      
+!       do ii = 1, 2*NNODE+4
+!         do jj = 1, 2*NNODE+4
+!           write(IOW,4000,advance="no") ktemp(ii,jj)
+! 4000      format(d15.5)
+!         enddo
+!         write(IOW, *) ' '
+!       enddo
       
       alpha = -(matmul(kaainv,matmul(kau(1:4,1:2*NNODE),U(1:2*NNODE))))
       
@@ -351,7 +362,7 @@
         
       return
 
-      END SUBROUTINE UEL_2D
+      END SUBROUTINE UEL
 
 
 
