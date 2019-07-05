@@ -46,7 +46,7 @@
 %     The parameters are no. nodes on the element, no. properties, total no. state variables (4*# integration points), integer identifier
 
       ELEMENTS, USER
-        PARAMETERS, 8, 36, U1
+        PARAMETERS, 8, 36, U2
 %       Define element properties - the values are passed to user subroutine elstif in the order they are listed here
 %       For the example provided, the params are Youngs Modulus, Poissons ratio
         PROPERTIES
@@ -112,9 +112,9 @@
         END DEGREES OF FREEDOM
 
 %   If you make use of distributed loads, you have to write the code for it in the UEL
-%        DISTRIBUTED LOADS
-%          end_element, U1, dload_history
-%        END DISTRIBUTED LOADS
+        DISTRIBUTED LOADS
+          end_element, U1, dload_history
+        END DISTRIBUTED LOADS
 
 
    END BOUNDARY CONDITIONS
@@ -130,8 +130,8 @@
 
 %   The CHECK STIFFNESS key tests the element subroutine to ensure that
 %   the residual force vector is consistent with the stiffness
-       CHECK STIFFNESS, U1
-       STOP
+       CHECK STIFFNESS, U2
+%       STOP
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Analysis %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -7336,7 +7336,7 @@ END MESH
 
 %   The CHECK STIFFNESS key tests the element subroutine to ensure that
 %   the residual force vector is consistent with the stiffness
-%       CHECK STIFFNESS, 1001
+       CHECK STIFFNESS, U1
 
 %    STOP
 
