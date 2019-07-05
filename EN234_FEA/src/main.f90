@@ -9,7 +9,7 @@ program en234fea
   character (len=200) :: Eclipse_root_folder
 
 
-  VS_root_folder = '../'   ! This should work with Intel Studio on the remote desktop if you follow the instructions for cloning your EN234FEA fork 
+  VS_root_folder = '/mnt/c/Users/shayanfa/Desktop/FortranExample/EN234_FEA/EN234_FEA/'   ! This should work with Intel Studio on the remote desktop if you follow the instructions for cloning your EN234FEA fork 
 
   root_directory = VS_root_folder
     
