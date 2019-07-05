@@ -128,6 +128,7 @@
 %   the residual force vector is consistent with the stiffness
 %   The syntax is CHECK STIFFNESS, element flag (or Un for an ABAQUS element)
        CHECK STIFFNESS, U1
+       STOP
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Analysis %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
