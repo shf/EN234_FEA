@@ -6,8 +6,6 @@
 !    The example implements a standard fully integrated 3D linear elastic continuum element
 !
 !    The file also contains the following subrouines:
-!          abq_UEL_invert3D                       - computes the inverse and determinant of a 3x3 matrix
-!
 !=========================== ABAQUS format user element subroutine ===================
 
       SUBROUTINE UEL_3D(RHS,AMATRX,SVARS,ENERGY,NDOFEL,NRHS,NSVARS,

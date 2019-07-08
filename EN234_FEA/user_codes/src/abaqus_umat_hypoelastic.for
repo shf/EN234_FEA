@@ -3,7 +3,7 @@
 !
 !
 
-      SUBROUTINE UMAT_El(STRESS,STATEV,DDSDDE,SSE,SPD,SCD,
+      SUBROUTINE UMAT(STRESS,STATEV,DDSDDE,SSE,SPD,SCD,
      1 RPL,DDSDDT,DRPLDE,DRPLDT,
      2 STRAN,DSTRAN,TIME,DTIME,TEMP,DTEMP,PREDEF,DPRED,CMNAME,
      3 NDI,NSHR,NTENS,NSTATV,PROPS,NPROPS,COORDS,DROT,PNEWDT,
@@ -251,60 +251,90 @@
 !
 !     Local variables
 
-      double precision E,xnu
-      integer i,j
+      double precision :: edev(6)
+      double precision :: evol
+      double precision :: G, xnu, e0, pt, K, Kb
+      
+      integer :: j
 
-      ddsdde = 0.d0
+      DDSDDE(1:6, 1:6) = 0.d0
+      edev(1:6) = 0.D0
+      evol = 0.D0
 
-      E = props(1)
-      xnu = props(2)
+      G = PROPS(1)
+      xnu = PROPS(2)
+      e0 = PROPS(3)
+      pt = PROPS(4)
 
 !    for debugging, you can use
 !      write(6,*) ' Hello '
 !    Output is then written to the .dat file
 
       If (ndi==3 .and. nshr==1) then    ! Plane strain or axisymmetry
-         ddsdde(1,1) = 1.d0-xnu
-         ddsdde(1,2) = xnu
-         ddsdde(1,3) = xnu
-         ddsdde(2,1) = xnu
-         ddsdde(2,2) = 1.d0-xnu
-         ddsdde(2,3) = xnu
-         ddsdde(3,1) = xnu
-         ddsdde(3,2) = xnu
-         ddsdde(3,3) = 1.d0-xnu
-         ddsdde(4,4) = 0.5d0*(1.d0-2.d0*xnu)
-         ddsdde = ddsdde*E/( (1.d0+xnu)*(1.d0-2.d0*xnu) )
+         ! ddsdde(1,1) = 1.d0-xnu
+         ! ddsdde(1,2) = xnu
+         ! ddsdde(1,3) = xnu
+         ! ddsdde(2,1) = xnu
+         ! ddsdde(2,2) = 1.d0-xnu
+         ! ddsdde(2,3) = xnu
+         ! ddsdde(3,1) = xnu
+         ! ddsdde(3,2) = xnu
+         ! ddsdde(3,3) = 1.d0-xnu
+         ! ddsdde(4,4) = 0.5d0*(1.d0-2.d0*xnu)
+         ! ddsdde = ddsdde*E/( (1.d0+xnu)*(1.d0-2.d0*xnu) )
+         write(6,*) 'Plane strain or axisymmetry'
       else if (ndi==2 .and. nshr==1) then   ! Plane stress
-         ddsdde(1,1) = 1.d0
-         ddsdde(1,2) = xnu
-         ddsdde(2,1) = xnu
-         ddsdde(2,2) = 1.d0
-         ddsdde(3,3) = 0.5d0*(1.d0-xnu)
-         ddsdde = ddsdde*E/( (1.d0+xnu*xnu) )
+         ! ddsdde(1,1) = 1.d0
+         ! ddsdde(1,2) = xnu
+         ! ddsdde(2,1) = xnu
+         ! ddsdde(2,2) = 1.d0
+         ! ddsdde(3,3) = 0.5d0*(1.d0-xnu)
+         ! ddsdde = ddsdde*E/( (1.d0+xnu*xnu) )
+         write(6,*) 'Plane stress'
       else ! 3D
-         ddsdde(1,1) = 1.d0-xnu
-         ddsdde(1,2) = xnu
-         ddsdde(1,3) = xnu
-         ddsdde(2,1) = xnu
-         ddsdde(2,2) = 1.d0-xnu
-         ddsdde(2,3) = xnu
-         ddsdde(3,1) = xnu
-         ddsdde(3,2) = xnu
-         ddsdde(3,3) = 1.d0-xnu
-         ddsdde(4,4) = 0.5d0*(1.d0-2.d0*xnu)
-         ddsdde(5,5) = ddsdde(4,4)
-         ddsdde(6,6) = ddsdde(4,4)
-         ddsdde = ddsdde*E/( (1.d0+xnu)*(1.d0-2.d0*xnu) )
+         ! ddsdde(1,1) = 1.d0-xnu
+         ! ddsdde(1,2) = xnu
+         ! ddsdde(1,3) = xnu
+         ! ddsdde(2,1) = xnu
+         ! ddsdde(2,2) = 1.d0-xnu
+         ! ddsdde(2,3) = xnu
+         ! ddsdde(3,1) = xnu
+         ! ddsdde(3,2) = xnu
+         ! ddsdde(3,3) = 1.d0-xnu
+         ! ddsdde(4,4) = 0.5d0*(1.d0-2.d0*xnu)
+         ! ddsdde(5,5) = ddsdde(4,4)
+         ! ddsdde(6,6) = ddsdde(4,4)
+         ! ddsdde = ddsdde*E/( (1.d0+xnu)*(1.d0-2.d0*xnu) )
+         write(6,*) '3D Analysis'
+         K = pt*(1.D0 - 2.D0*xnu)*(1.D0+e0)/((1.D0+xnu)*G)
+
+         evol = sum(STRAN(1:3)+DSTRAN(1:3))
+         edev(1:3) = STRAN(1:3)+DSTRAN(1:3) - evol/3.D0
+         edev(4:6) = 0.5d0*(STRAN(4:6)+DSTRAN(4:6))
+
+         stress = 2.D0*G*edev
+         stress(1:3)=stress(1:3)+pt*(1.D0-exp(-(1.D0+d0)*evol/K))/3.D0
+   
+         Kb = pt*(1.D0+e0)*exp(-(1.D0+e0)*evol/K)/(3.D0*K)-2.D0*G/3.D0
+   
+         do j=1,3
+            DDSDDE(j,j) = DDSDDE(j,j) + 2.D0*G
+         enddo
+   
+         do j=4,6
+            DDSDDE(j,j) = DDSDDE(j,j) + G
+         enddo
+   
+         DDSDDE(1:3, 1:3) = DDSDDE(1:3,1:3) + Kb
       endif
 !
 !     NOTE: ABAQUS uses engineering shear strains,
 !     i.e. stran(ndi+1) = 2*e_12, etc...
-      do i = 1,ntens
-      do j = 1,ntens
-         stress(i) = stress(i) + ddsdde(i,j)*dstran(j)
-      end do
-      end do
+      ! do i = 1,ntens
+      ! do j = 1,ntens
+      !    stress(i) = stress(i) + ddsdde(i,j)*dstran(j)
+      ! end do
+      ! end do
 
       RETURN
-      END subroutine UMAT_El
+      END subroutine UMAT

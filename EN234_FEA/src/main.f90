@@ -90,8 +90,8 @@ program en234fea
 
 !  HW6  Porous elasticity UMAT
 
-!   infil = 'input_files/Abaqus_umat_porous_elastic.in'
-!   outfil = 'Output_files/Abaqus_umat_porous_elastic.out'
+   infil = 'input_files/Abaqus_umat_porous_elastic.in'
+   outfil = 'Output_files/Abaqus_umat_porous_elastic.out'
 
 !  HW7 Hyperelastic user element
 !   infil = 'input_files/Abaqus_uel_hyperelastic.in'
@@ -109,8 +109,8 @@ program en234fea
 !   infil = 'input_files/Abaqus_uel_phasefield_coarse.in'
 !   outfil = 'Output_files/Abaqus_uel_phasefield_coarse.out'
 
-   infil = 'input_files/Abaqus_uel_phasefield_fine.in'
-   outfil = 'Output_files/Abaqus_uel_phasefield_fine.out'
+!  infil = 'input_files/Abaqus_uel_phasefield_fine.in'
+!  outfil = 'Output_files/Abaqus_uel_phasefield_fine.out'
 
 
 !   Homework 9 - McCormick model with 1 element

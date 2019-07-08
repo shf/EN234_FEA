@@ -128,7 +128,7 @@
 %   The CHECK STIFFNESS key tests the element subroutine to ensure that
 %   the residual force vector is consistent with the stiffness
 %   The syntax is CHECK STIFFNESS, element flag (or Un for an ABAQUS element)
-       CHECK STIFFNESS, C3D8
+%       CHECK STIFFNESS, C3D8
        CHECK MATERIAL TANGENT, porous_elastic_umat
 
 
@@ -142,7 +142,7 @@
           INITIAL TIME STEP, 1.d0        
           MAX TIME STEP, 1.d0
           MIN TIME STEP, 0.001d0
-          MAX NUMBER OF STEPS, 3
+          MAX NUMBER OF STEPS, 15
           STOP TIME, 10.d0
           STATE PRINT STEP INTERVAL, 1
           USER PRINT STEP INTERVAL, 1
