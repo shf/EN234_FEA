@@ -94,8 +94,8 @@ program en234fea
 !   outfil = 'Output_files/Abaqus_umat_porous_elastic.out'
 
 !  HW7 Hyperelastic user element
-   infil = 'input_files/Abaqus_uel_hyperelastic.in'
-   outfil = 'Output_files/Abaqus_uel_hyperelastic.out'
+!   infil = 'input_files/Abaqus_uel_hyperelastic.in'
+!   outfil = 'Output_files/Abaqus_uel_hyperelastic.out'
 
 !   Hyperelastic umat
 !  infil = 'input_files/Abaqus_umat_hyperelastic2.in'
@@ -114,8 +114,8 @@ program en234fea
 
 
 !   Homework 9 - McCormick model with 1 element
-!   infil = 'input_files/Abaqus_vumat_McCormick.in'
-!   outfil = 'Output_files/Abaqus_vumat_McCormick.out'
+   infil = 'input_files/Abaqus_vumat_McCormick.in'
+   outfil = 'Output_files/Abaqus_vumat_McCormick.out'
 
 
 
