@@ -7,7 +7,7 @@
 !
 !=========================== ABAQUS format user element subroutine ===================
 
-      SUBROUTINE UEL_PH(RHS,AMATRX,SVARS,ENERGY,NDOFEL,NRHS,NSVARS,
+      SUBROUTINE UEL(RHS,AMATRX,SVARS,ENERGY,NDOFEL,NRHS,NSVARS,
      1     PROPS,NPROPS,COORDS,MCRD,NNODE,U,DU,V,A,JTYPE,TIME,DTIME,
      2     KSTEP,KINC,JELEM,PARAMS,NDLOAD,JDLTYP,ADLMAG,PREDEF,NPREDF,
      3     LFLAGS,MLVARX,DDLMAG,MDLOAD,PNEWDT,JPROPS,NJPROP,PERIOD)
@@ -97,11 +97,11 @@
       double precision  ::  w(9)                             ! Area integration weights
       double precision  ::  w_ph(4)                          ! Phase field weights
       double precision  ::  N(9)                             ! 2D shape functions
-      double precision  ::  N_ph(4)                          ! phase field shape functions
+      double precision  ::  Nbar(4)                          ! phase field shape functions
       double precision  ::  dNdxi(9,2)                       ! 2D shape function derivatives
-      double precision  ::  dNdxi_ph(9,2)                    ! 2D shape function derivatives for phase field
+      double precision  ::  dNbardxi(9,2)                    ! 2D shape function derivatives for phase field
       double precision  ::  dNdx(9,2)                        ! Spatial derivatives
-      double precision  ::  dNdx_ph(9,2)                     ! Spatial derivatives for phase field
+      double precision  ::  dNbardx(9,2)                     ! Spatial derivatives for phase field
       double precision  ::  dxdxi(2,2)                       ! Derivative of spatial coords wrt normalized coords
       double precision  ::  dxdxi_ph(2,2)                    ! Derivative of spatial coords wrt normalized coords for phase field
       double precision  ::  dxidx(2,2), determinant, det0    ! Jacobian inverse and determinant
@@ -134,7 +134,7 @@
     !  double precision  ::  xm(2), wm(1)                         ! Integration point and weight for incompatible mode
       double precision  ::  E, xnu, Om, WC, kappa, dc, theta   ! Material properties
       double precision  ::  D44, D11, D12, con                 ! temporary
-      double precision  ::  delta(4)                           ! delta
+!      double precision  ::  delta(4)                           ! delta
 
     !
     !     Example ABAQUS UEL implemeting 2D phase field model
@@ -159,7 +159,7 @@
     !  if (NNODE == 9) n_points = 9             ! Quadratic rect
 
       call abq_UEL_2D_integrationpoints(n_points, NNODE, xi, w)
-      call abq_UEL_2D_integrationpoints(4, 4, xi_ph, w_ph)
+!      call abq_UEL_2D_integrationpoints(4, 4, xi_ph, w_ph)
 
 	  
       if (MLVARX<2*NNODE) then
@@ -173,16 +173,9 @@
       AMATRX(1:NDOFEL,1:NDOFEL) = 0.d0
 
       SVARS(1:NSVARS) = 0.d0
+      
+ !     delta = (/1.d0,1.d0,1.d0,0.d0/)
 
-      delta = (/1.d0,1.d0,1.d0,0.d0/)
-
-    !  alpha = 0.d0
-    !  kuu = 0.d0
-    !  kau = 0.d0
-    !  kaa = 0.d0
-    !  kua = 0.d0
-    !  rhs_temp = 0.D0
-	  
       E = PROPS(1)
       xnu = PROPS(2)
       Om = PROPS(3)
@@ -190,8 +183,6 @@
       kappa = PROPS(5)
       dc = PROPS(6)
       theta = PROPS(7)
-
-      h = 1.D0 ! thickness
 
       d11 = (1.D0-xnu)*E/( (1.D0+xnu)*(1.D0-2.D0*xnu) )
       d12 = xnu*E/( (1.D0+xnu)*(1.D0-2.D0*xnu) )
@@ -240,10 +231,10 @@
         call abq_UEL_invert2d(dxdxi,dxidx,determinant)
         dNdx(1:NNODE,1:2) = matmul(dNdxi(1:NNODE,1:2),dxidx)
 
-        call abq_UEL_2D_shapefunctions(xi_ph(1:2,kint),4,N_ph,dNdxi_ph)
-        dxdxi_ph = matmul(coords(1:2,1:4),dNdxi(1:4,1:2))
-        call abq_UEL_invert2d(dxdxi_ph,dxidx_ph,det_ph)
-        dNdx_ph(1:4,1:2) = matmul(dNdxi(1:4,1:2),dxidx_ph) 
+        call abq_UEL_2D_shapefunctions(xi(1:2,kint),4,Nbar,dNbardxi)
+!        dxdxi_ph = matmul(coords(1:2,1:4),dNdxi(1:4,1:2))
+!        call abq_UEL_invert2d(dxdxi_ph,dxidx_ph,det_ph)
+        dNbardx(1:4,1:2) = matmul(dNbardxi(1:4,1:2),dxidx) 
 
         B = 0.D0
         B(1,1)  = dNdx(1,1)
@@ -273,55 +264,55 @@
         B(3,21) = dNdx(7,2)
         B(3,23) = dNdx(8,2)
 
-        B(4,2)  = dNdx(1,1)
-        B(4,6)  = dNdx(2,1)
-        B(4,10) = dNdx(3,1)
-        B(4,14) = dNdx(4,1)
-        B(4,18) = dNdx(5,1)
-        B(4,20) = dNdx(6,1)
-        B(4,22) = dNdx(7,1)
-        B(4,24) = dNdx(8,1)
+        B(3,2)  = dNdx(1,1)
+        B(3,6)  = dNdx(2,1)
+        B(3,10) = dNdx(3,1)
+        B(3,14) = dNdx(4,1)
+        B(3,18) = dNdx(5,1)
+        B(3,20) = dNdx(6,1)
+        B(3,22) = dNdx(7,1)
+        B(3,24) = dNdx(8,1)
         
-        B(4,3)  = N_ph(1)
-        B(4,7)  = N_ph(2)
-        B(4,11) = N_ph(3)
-        B(4,15) = N_ph(4)
+        B(4,3)  = Nbar(1)
+        B(4,7)  = Nbar(2)
+        B(4,11) = Nbar(3)
+        B(4,15) = Nbar(4)
 
-        B(5,4)  = N_ph(1)
-        B(5,8)  = N_ph(2)
-        B(5,12) = N_ph(3)
-        B(5,16) = N_ph(4)
+        B(5,4)  = Nbar(1)
+        B(5,8)  = Nbar(2)
+        B(5,12) = Nbar(3)
+        B(5,16) = Nbar(4)
         
-        B(6,3)  = dNdx_ph(1, 1)
-        B(6,7)  = dNdx_ph(2, 1)
-        B(6,11) = dNdx_ph(3, 1)
-        B(6,15) = dNdx_ph(4, 1)
+        B(6,3)  = dNbardx(1, 1)
+        B(6,7)  = dNbardx(2, 1)
+        B(6,11) = dNbardx(3, 1)
+        B(6,15) = dNbardx(4, 1)
 
-        B(7,3)  = dNdx_ph(1, 2)
-        B(7,7)  = dNdx_ph(2, 2)
-        B(7,11) = dNdx_ph(3, 2)
-        B(7,15) = dNdx_ph(4, 2)
+        B(7,3)  = dNbardx(1, 2)
+        B(7,7)  = dNbardx(2, 2)
+        B(7,11) = dNbardx(3, 2)
+        B(7,15) = dNbardx(4, 2)
 
-        B(8,4)  = dNdx_ph(1, 1)
-        B(8,8)  = dNdx_ph(2, 1)
-        B(8,12) = dNdx_ph(3, 1)
-        B(8,16) = dNdx_ph(4, 1)
+        B(8,4)  = dNbardx(1, 1)
+        B(8,8)  = dNbardx(2, 1)
+        B(8,12) = dNbardx(3, 1)
+        B(8,16) = dNbardx(4, 1)
 
-        B(9,4)  = dNdx_ph(1, 2)
-        B(9,8)  = dNdx_ph(2, 2)
-        B(9,12) = dNdx_ph(3, 2)
-        B(9,16) = dNdx_ph(4, 2)
+        B(9,4)  = dNbardx(1, 2)
+        B(9,8)  = dNbardx(2, 2)
+        B(9,12) = dNbardx(3, 2)
+        B(9,16) = dNbardx(4, 2)
 
         strain = matmul(B,U)
         dstrain = matmul(B,DU(1:2*NNODE+2*4,1))
 
         con = strain(5)
 
-        elstrain(1) = strain(1)
-        elstrain(2) = strain(2)
-        elstrain(3) = 0.D0
+        elstrain(1) = strain(1) - con*Om/3.D0
+        elstrain(2) = strain(2) - con*Om/3.D0
+        elstrain(3) = 0.D0 - con*Om/3.D0
         elstrain(4) = strain(3)
-        elstress = matmul(Del,(elstrain - con*Om*delta/3.D0))
+        elstress = matmul(Del,elstrain)
 
         q(1) = elstress(1)
         q(2) = elstress(2)
@@ -352,7 +343,7 @@
      3   , matmul(D,B(1:9,1:2*NNODE+2*4)))*w(kint)*determinant
 
         ENERGY(2) = ENERGY(2)
-     1     + 0.5D0*dot_product(elstress,elstrain)*w(kint)*determinant           ! Store the elastic strain energy
+     1     + 0.5D0*dot_product(q,strain)*w(kint)*determinant           ! Store the elastic strain energy
         
        if (NSVARS>=n_points*4) then   ! Store stress at each integration point (if space was allocated to do so)
           SVARS(4*kint-3:4*kint) = elstress(1:4)
@@ -497,7 +488,7 @@
         
       return
 
-      END SUBROUTINE UEL_PH
+      END SUBROUTINE UEL
 
 !      INCLUDE 'facenodes.for'
 !      INCLUDE 'shapefunctions.for'
