@@ -2,7 +2,7 @@
 
 MOD=$(pwd)/modules
 SRC=$(pwd)/src
-OBJ=$(pwd)/Output_Files
+OBJ=$(pwd)/Output_files
 
 USRMOD=$(pwd)/user_codes/modules
 USRSRC=$(pwd)/user_codes/src
@@ -37,3 +37,8 @@ gfortran -c $USRSRC/*.for -I$OBJ
 gfortran -c $SRC/*.f90 -I$OBJ
 
 gfortran -o main *.o
+
+$OBJ/main
+
+code $OBJ/*.out
+code $OBJ/*.dat

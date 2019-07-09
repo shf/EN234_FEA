@@ -7332,9 +7332,8 @@ END MESH
 
 %   The CHECK STIFFNESS key tests the element subroutine to ensure that
 %   the residual force vector is consistent with the stiffness
-%       CHECK STIFFNESS, 1001
-
-%    STOP
+       CHECK STIFFNESS, U1
+%       STOP
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Analysis %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -7366,7 +7365,7 @@ END MESH
          SOLVER, DIRECT, LINEAR
 
          PRINT STATE, Output_files/contourplots.dat
-%            DEGREES OF FREEDOM   % Uncomment this to print the displacements
+%           DEGREES OF FREEDOM   % Uncomment this to print the displacements
             FIELD VARIABLES, S11,S22,S33,S12,S13,S23
             DISPLACED MESH
             DISPLACEMENT SCALE FACTOR, 1.d0

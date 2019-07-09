@@ -9,7 +9,7 @@ program en234fea
   character (len=200) :: Eclipse_root_folder
 
 
-  VS_root_folder = '../'   ! This should work with Intel Studio on the remote desktop if you follow the instructions for cloning your EN234FEA fork 
+  VS_root_folder = '/mnt/c/Users/shayanfa/Desktop/FortranExample/EN234_FEA/EN234_FEA/'   ! This should work with Intel Studio on the remote desktop if you follow the instructions for cloning your EN234FEA fork 
 
   root_directory = VS_root_folder
     
@@ -30,8 +30,8 @@ program en234fea
 !   Demo codes - these provide examples of coding and testing ABAQUS user elements in EN234FEA
 !
 !   Small strain linear elasticity - the UEL is in Abaqus_uel_3d.for
-   infil = 'input_files/Abaqus_uel_linear_elastic_3d.in'
-   outfil = 'Output_files/Abaqus_uel_linear_elastic_3d.out'
+!   infil = 'input_files/Abaqus_uel_linear_elastic_3d.in'
+!   outfil = 'Output_files/Abaqus_uel_linear_elastic_3d.out'
 
 !   Linear elastic plate with a central hole using an ABAQUS UEL
 !   infil = 'input_files/Abaqus_uel_holeplate_3d.in'
@@ -46,8 +46,8 @@ program en234fea
 !   Runs an explicit dynamic simulation of a 3D plate with a central hole with and ABAQUS VUEL
 !   This simulation will take a few minutes to run (running in release mode will speed it up)
 !
-!   infil = 'input_files/Abaqus_uel_holeplate_3d.in'
-!   outfil = 'output_files/Abaqus_uel_holeplate_3d.out'
+!   infil = 'input_files/Abaqus_vuel_holeplate_3d.in'
+!   outfil = 'output_files/Abaqus_vuel_holeplate_3d.out'
    
 !  Tests an ABAQUS format UMAT subroutine (in abaqus_umat_elastic.for) with two 8 noded quadrilateral elements
 !   infil = 'input_files/Abaqus_umat_linear_elastic_3d.in'
@@ -57,9 +57,13 @@ program en234fea
 !   infil = 'input_files/Abaqus_umat_holeplate_3d.in'
 !   outfil = 'Output_files/Abaqus_umat_holeplate_3d.out'
 
-!   Tests the VUMAT on a hole in a plate problem
+!   Tests the VUMAT for a linear elastic problem
 !   infil = 'input_files/Abaqus_vumat_linear_elastic_3d.in'
 !   outfil = 'Output_files/Abaqus_vumat_linear_elastic_3d.out'
+
+!   Tests the VUMAT on a hole in a plate problem
+!   infil = 'input_files/Abaqus_vumat_holeplate_3d.in'
+!   outfil = 'Output_files/Abaqus_vumat_holeplate_3d.out'
 
 
 !   Homework 3: develop and test an ABAQUS user element implementing 2D linear elasticity with full integration
@@ -109,19 +113,22 @@ program en234fea
 !   infil = 'input_files/Abaqus_uel_phasefield_coarse.in'
 !   outfil = 'Output_files/Abaqus_uel_phasefield_coarse.out'
 
-!   infil = 'input_files/Abaqus_uel_phasefield_fine.in'
-!   outfil = 'Output_files/Abaqus_uel_phasefield_fine.out'
+!  infil = 'input_files/Abaqus_uel_phasefield_fine.in'
+!  outfil = 'Output_files/Abaqus_uel_phasefield_fine.out'
 
 
 !   Homework 9 - McCormick model with 1 element
 !   infil = 'input_files/Abaqus_vumat_McCormick.in'
 !   outfil = 'Output_files/Abaqus_vumat_McCormick.out'
 
-
-
 !   Homework 10 - Continuum beam element solution to end loaded cantilever beam
-!   infil = 'input_files/Abaqus_uel_continuum_beam.in'
-!   outfil = 'Output_files/Abaqus_uel_continuum_beam.out'
+   infil = 'input_files/Abaqus_uel_continuum_beam.in'
+   outfil = 'Output_files/Abaqus_uel_continuum_beam.out'
+
+
+!   Finite Strain BBar
+!  infil = 'input_files/Abaqus_uel_hyperelastic.in'
+!  outfil = 'Output_files/Abaqus_uel_hyperelastic.out'
 
    infil = trim(root_directory)//trim(infil)
    outfil = trim(root_directory)//trim(outfil)
@@ -147,7 +154,7 @@ program en234fea
 
    stop
   
-  500 write(6,*) ' Error opening input or output file '
+  500 write(6,*) ' Error opening input or output file!'
  
 
   

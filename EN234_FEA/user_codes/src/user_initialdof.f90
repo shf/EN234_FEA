@@ -26,6 +26,8 @@
 
      if (n_dof==4) then
          dof_total(4) = 0.5d0 + A*sin(k*coords(1))*sin(k*coords(2))
+     else if (n_dof==2) then
+         dof_total(2) = 0.5d0 + A*sin(k*coords(1))*sin(k*coords(2))
      endif
      
      end subroutine user_initialdof

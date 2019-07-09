@@ -4129,7 +4129,7 @@ END COORDINATES
 END NODES
 
 %     The MATERIAL command creates a new material.  The material properties can be assigned to ABAQUS style continuum elements to test an ABAQUS UMAT or VUMAT
-      MATERIAL, linear_elastic_umat
+      MATERIAL, linear_elastic_vumat
         STATE VARIABLES, 0          % Number of material state variables (if the key is omitted the number of state vars defaults to zero)
         PROPERTIES
          10000.d0, 0.3d0
@@ -4141,7 +4141,9 @@ END NODES
 %     The parameters are no. nodes on the element, no. properties, total no. state variables, integer identifier  
       ELEMENTS, INTERNAL
         TYPE, C3D8
-        PROPERTIES, linear_elastic_umat
+        PROPERTIES, linear_elastic_vumat
+        DENSITY, 10.d0
+
 %     Define element connectivity
 %     The element number (first number in the list) is optional, and is ignored in the code
         CONNECTIVITY, soft
@@ -7307,7 +7309,6 @@ END MESH
 %       The syntax is node set name (or number of a single node), DOF number, VALUE/HISTORY/SUBROUTINE, either a value or a history/parameter name, RATE (optional)
 %     
         DEGREES OF FREEDOM
-           3, 3, VALUE, 0.d0
            bot, 2, VALUE,  0.d0
            left, 1, VALUE, 0.d0
            right, 1, HISTORY, dof_history
@@ -7328,55 +7329,35 @@ END MESH
 
    END BOUNDARY CONDITIONS
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Mesh printing, error checking %%%%%%%%%%%%%%%%%%%%
-
-%  Print the initial mesh to a file named initial_mesh.dat
-
-   PRINT INITIAL MESH, Output_files/initial_mesh.dat
-
-%   The CHECK STIFFNESS key tests the element subroutine to ensure that
-%   the residual force vector is consistent with the stiffness
-       CHECK STIFFNESS, C3D8
-
-%    STOP
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Analysis %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %   The STATIC STEP key initializes a static load step
 
-     STATIC STEP
+     EXPLICIT DYNAMIC STEP
 
 %        The TIME STEP key defines values of parameters controlling time stepping.
 %        These parameters are passed to subroutine staticstep.
 %        The parameters must be entered in the correct order
 
-          INITIAL TIME STEP, 1.d0
-          MAX TIME STEP, 1.d0
-          MIN TIME STEP, 0.001d0
-          MAX NUMBER OF STEPS, 3
-          STOP TIME, 10.d0
-          STATE PRINT STEP INTERVAL, 1
+          TIME STEP, 0.01
+          NUMBER OF STEPS, 5
+          STATE PRINT STEPS, 1
+          USER PRINT STEPS, 210
     
-%        The SOLVER key controls the equation solver and Newton-Raphson iterations
-%        The options are FACTOR for direct solver, CONJUGATE GRADIENT for cg solver
-%        Factor will work on anything but might be slow for large equation systems.   
-%        Conjugate gradient works well for elasticity problems but is not so good for unsymmetric matrices
-%        Its convergence for unsymmetric systems is more likely than conjugate gradient but somewhat unpredictable.
-%                        LINEAR for linear equations, NONLINEAR for nonlinear equations
-%                        For nonlinear solver, must specify convergence tolerance and max # iterations
-%                        UNSYMMETRIC  (optional - only for unsymmetric stiffness)
-%         For internal elements the nonlinear solver must always be used in EN234FEA
-
-         SOLVER, DIRECT, NONLINEAR, 1.d-05, 15, UNSYMMETRIC
-
+%      This prints the DOF values and projected nodal state for all solid elements to a tecplot readable file
+%      Nodal variables are printed as
+%         X, Y, (Z), Ux, Uy, (Uz), Projected states.
+%         Standard continuum elements allow you to print stresses (Sij), strains (Eij), and any material state variables Un if the material has state variables
          PRINT STATE, Output_files/contourplots.dat
-            DEGREES OF FREEDOM   % Uncomment this to print the displacements
+            DEGREES OF FREEDOM
             FIELD VARIABLES, S11,S22,S33,S12,S13,S23
             DISPLACED MESH
             DISPLACEMENT SCALE FACTOR, 1.d0
          END PRINT STATE
 
-        END STATIC STEP
+
+
+        END EXPLICIT DYNAMIC STEP
          
 
    STOP
