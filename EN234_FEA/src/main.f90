@@ -46,8 +46,8 @@ program en234fea
 !   Runs an explicit dynamic simulation of a 3D plate with a central hole with and ABAQUS VUEL
 !   This simulation will take a few minutes to run (running in release mode will speed it up)
 !
-!   infil = 'input_files/Abaqus_uel_holeplate_3d.in'
-!   outfil = 'output_files/Abaqus_uel_holeplate_3d.out'
+!   infil = 'input_files/Abaqus_vuel_holeplate_3d.in'
+!   outfil = 'output_files/Abaqus_vuel_holeplate_3d.out'
    
 !  Tests an ABAQUS format UMAT subroutine (in abaqus_umat_elastic.for) with two 8 noded quadrilateral elements
 !   infil = 'input_files/Abaqus_umat_linear_elastic_3d.in'
@@ -57,9 +57,13 @@ program en234fea
 !   infil = 'input_files/Abaqus_umat_holeplate_3d.in'
 !   outfil = 'Output_files/Abaqus_umat_holeplate_3d.out'
 
-!   Tests the VUMAT on a hole in a plate problem
+!   Tests the VUMAT for a linear elastic problem
 !   infil = 'input_files/Abaqus_vumat_linear_elastic_3d.in'
 !   outfil = 'Output_files/Abaqus_vumat_linear_elastic_3d.out'
+
+!   Tests the VUMAT on a hole in a plate problem
+!   infil = 'input_files/Abaqus_vumat_holeplate_3d.in'
+!   outfil = 'Output_files/Abaqus_vumat_holeplate_3d.out'
 
 
 !   Homework 3: develop and test an ABAQUS user element implementing 2D linear elasticity with full integration
@@ -106,8 +110,8 @@ program en234fea
 !   infil = 'input_files/Abaqus_uel_phasefield_1el.in'
 !   outfil = 'Output_files/Abaqus_uel_phasefield_1el.out'
 
-   infil = 'input_files/Abaqus_uel_phasefield_coarse.in'
-   outfil = 'Output_files/Abaqus_uel_phasefield_coarse.out'
+!   infil = 'input_files/Abaqus_uel_phasefield_coarse.in'
+!   outfil = 'Output_files/Abaqus_uel_phasefield_coarse.out'
 
 !  infil = 'input_files/Abaqus_uel_phasefield_fine.in'
 !  outfil = 'Output_files/Abaqus_uel_phasefield_fine.out'
@@ -120,8 +124,8 @@ program en234fea
 
 
 !   Homework 10 - Continuum beam element solution to end loaded cantilever beam
-!   infil = 'input_files/Abaqus_uel_continuum_beam.in'
-!   outfil = 'Output_files/Abaqus_uel_continuum_beam.out'
+   infil = 'input_files/Abaqus_uel_continuum_beam.in'
+   outfil = 'Output_files/Abaqus_uel_continuum_beam.out'
 
    infil = trim(root_directory)//trim(infil)
    outfil = trim(root_directory)//trim(outfil)
@@ -147,7 +151,7 @@ program en234fea
 
    stop
   
-  500 write(6,*) ' Error opening input or output file '
+  500 write(6,*) ' Error opening input or output file!'
  
 
   

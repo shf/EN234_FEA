@@ -7365,7 +7365,7 @@ END MESH
          SOLVER, DIRECT, LINEAR
 
          PRINT STATE, Output_files/contourplots.dat
-%            DEGREES OF FREEDOM   % Uncomment this to print the displacements
+%           DEGREES OF FREEDOM   % Uncomment this to print the displacements
             FIELD VARIABLES, S11,S22,S33,S12,S13,S23
             DISPLACED MESH
             DISPLACEMENT SCALE FACTOR, 1.d0

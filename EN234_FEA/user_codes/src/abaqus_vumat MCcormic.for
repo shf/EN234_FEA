@@ -44,7 +44,7 @@
        double precision :: E,xnu,Y,e0,m,edot0,alp,td,H,S,Om    ! Material properties
        double precision :: f, dfde                             ! nonlinear equation and tangent
        double precision :: eplas, deplas 
-       double precision :: ta, dta, C, sig0, c1, ds0           ! variables in the nonlinear equation
+       double precision :: ta, dta, C, sig0, c1, ds0, dCde     ! variables in the nonlinear equation
 !
 !      Conventions for storing tensors:
 !
@@ -136,6 +136,7 @@
      1                        sum(strainInc(k,1:ndir))/3.D0
 
               dedev(ndir+1:ntens) = strainInc(k, ndir+1:ntens)
+
               ! 2. Calculate Sij^n
               sdevstar(1:ndir) = stressOld(k,1:ndir) - 
      1                           sum(stressOld(k,1:ndir))/3.D0
@@ -150,17 +151,16 @@
      3                           sdevstar(ndir+1:ntens)))
 
               ! Second part (volumetric part) of sigma_ij^(n+1)
-              skstar = sum(stressOld(k,1:ndir))
+              skkstar = sum(stressOld(k,1:ndir))
      1             + E*sum(strainInc(k,1:ndir))/(1.d0-2.d0*xnu)
 
               ! Elastic increment (either no stress, or no plastic strain rate)
               if (sestar/Y<1.D-09 .or. edot0==0.D0) then
                 stressNew(k,1:ntens) = sdevstar(1:ntens)
                 stressNew(k,1:ndir) = stressNew(k,1:ndir) + skkstar/3.d0
-                stateNew(k,1) = eplas
-                stateNew(k,2) = 0.d0
-                stateNew(k,3) = 0.d0 
-                cycle 
+                stateNew(k,1) = eplas + deplas
+                stateNew(k,2) = deplas
+                stateNew(k,3) = ta + dta 
               endif
 
               err = 1.D0
@@ -171,31 +171,41 @@
               write(1,*) ' Starting Iterations '
               
          do while (err>tol)
-                
+
+            if (deplas<1.d-88) then
+              
+              dta = dt - ta*(deplas/Om)**2.d0 
+              ddtade = -2.d0*ta*deplas/(Om**2.d0)
+
+            else                            
               ! Computing delta ta
               dta = (ta*(exp(-deplas/Om)-1.D0)+Om*dt/deplas)/
      1                    (1.D0+Om/deplas*exp(-deplas/Om))
-              !Computing C
-              C = 1.D0 - exp(-((ta+dta)/td)**alp)
-
-              !Computing sig0
-              sig0 = Y*(1.D0+(eplas+deplas)/e0)**m
-
-              !Last term of nonlinear equation
-              c1 = sig0/S + H*C + log(deplas/(dt*edot0))
-
-              !Nonlinear equation
-              f = sestar/S - c1 - 1.5d0*E*deplas/(S*(1.d0+xnu))
 
               !N-R for new deplas
               !ddtade= -ta/Om
-              ddtade= ((-ta/Om*exp(-deplas/Om)-Om*dt*deplas**(-2.D0))+
+            ddtade= ((-ta/Om*exp(-deplas/Om)-Om*dt*deplas**(-2.D0))+
      1      (ta*(exp(-deplas/Om)-1.D0)+dt*Om*1.D0/deplas)*1.D0/deplas
      2      *exp(-deplas/Om))/(1.D0+Om/deplas*exp(-deplas/Om))
 
+            endif
+            !Computing C
+            C = 1.D0 - exp(-((ta+dta)/td)**alp)
+            dCde = exp(-((ta+dta)/td)**alp)*(alp/td)*dtade*
+     1             ((ta+dta)/td)**(alpha-1.d0)
+
+            !Computing sig0
+            sig0 = Y*(1.D0+(eplas+deplas)/e0)**m
+
+            !Last term of nonlinear equation
+            c1 = sig0/S + H*C + log(deplas/(dt*edot0))
+
+            !Nonlinear equation
+            f = sestar/S - c1 - 1.5d0*E*deplas/(S*(1.d0+xnu))
+
           ds0 = Y*m*(1.d0+(eplas+deplas)/e0)**(m-1.d0)*1.d0/e0
-          dfde=-(ds0/S+H*alp*((ta+dta)/td)**(alp-1.d0)*ddtade/td*(1-C))
-     &                   - 1.5d0*E/(S*(1.d0+xnu)) - 1.D0/deplas
+          dfde=-ds0/S - H*dCde
+     1                   - 1.5d0*E/(S*(1.d0+xnu)) - 1.D0/deplas
 
               deplas_new = deplas - f/dfde
               if (deplas_new<0.d0) then
