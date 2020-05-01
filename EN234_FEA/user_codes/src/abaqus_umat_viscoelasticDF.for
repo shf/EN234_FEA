@@ -3,7 +3,7 @@
 !
 !
 
-      SUBROUTINE UMAT_HYPO(STRESS,STATEV,DDSDDE,SSE,SPD,SCD,
+      SUBROUTINE UMAT(STRESS,STATEV,DDSDDE,SSE,SPD,SCD,
      1 RPL,DDSDDT,DRPLDE,DRPLDT,
      2 STRAN,DSTRAN,TIME,DTIME,TEMP,DTEMP,PREDEF,DPRED,CMNAME,
      3 NDI,NSHR,NTENS,NSTATV,PROPS,NPROPS,COORDS,DROT,PNEWDT,
@@ -24,6 +24,8 @@
      2 STRAN(NTENS),DSTRAN(NTENS),TIME(2),PREDEF(1),DPRED(1),
      3 PROPS(NPROPS),COORDS(3),DROT(3,3),DFGRD0(3,3),DFGRD1(3,3)
 
+       DIMENSION D(3,3), SOLD(NSTATV), G(6,6), S(NSTATV)
+       REAL*8 A_N, A_D, TERM1_0, TERM2_0, TERM1, TERM2
 !
 !      Relevant manual sections:
 !
@@ -248,93 +250,191 @@
 
 !      user coding to define DDSDDE, STRESS, STATEV, SSE, SPD, SCD
 !      and, if necessary, RPL, DDSDDT, DRPLDE, DRPLDT, PNEWDT
+
+!     PROPS(1) NUMBER OF MAXWELL ELEMENTS
+!     STATEVARIABLES ARE 6*NUMBER OF MAXWELL ELEMENTS
+
+!     Props(2) and Props(3) shows the G and K for elastic element
+!     PROPS(2) THROUGH PROPS(2) ARE THE SHEAR MODULI IN PASCALS
+!     MU0=PROPS(1)=14.59E3
+!     MU1=PROPS(2)=11.87E3
 !
-!     Local variables
+!     PROPS(3) ARE THE RELAXATION TIMES IN SECONDS
+!     TAU1=PROPS(3)=960.4
+!     PROPS(4) IS THE BULK MODULUS OF THE MATERIAL=10^3*PROPS(1)
+!     PROPS(4)=14590E3
+!
 
-      double precision :: edev(6)
-      double precision :: evol
-      double precision :: G, xnu, e0, pt, K, Kb
-      
-      integer :: j
-
-      DDSDDE(1:6, 1:6) = 0.d0
-      edev(1:6) = 0.D0
-      evol = 0.D0
-
-      G = PROPS(1)
-      xnu = PROPS(2)
-      e0 = PROPS(3)
-      pt = PROPS(4)
-
-!    for debugging, you can use
+!     for debugging, you can use
 !      write(6,*) ' Hello '
-!    Output is then written to the .dat file
+!     Output is then written to the .dat file
+
+!     local variables
+      integer :: i
+      integer :: k1, k2, n, n2, m
+      integer :: nb
+
+      nb = int(PROPS(1))
 
       If (ndi==3 .and. nshr==1) then    ! Plane strain or axisymmetry
-         ! ddsdde(1,1) = 1.d0-xnu
-         ! ddsdde(1,2) = xnu
-         ! ddsdde(1,3) = xnu
-         ! ddsdde(2,1) = xnu
-         ! ddsdde(2,2) = 1.d0-xnu
-         ! ddsdde(2,3) = xnu
-         ! ddsdde(3,1) = xnu
-         ! ddsdde(3,2) = xnu
-         ! ddsdde(3,3) = 1.d0-xnu
-         ! ddsdde(4,4) = 0.5d0*(1.d0-2.d0*xnu)
-         ! ddsdde = ddsdde*E/( (1.d0+xnu)*(1.d0-2.d0*xnu) )
-         write(6,*) 'Plane strain or axisymmetry'
+         write(6,*) ' Plane strain or axisymmetry is not supported '
       else if (ndi==2 .and. nshr==1) then   ! Plane stress
-         ! ddsdde(1,1) = 1.d0
-         ! ddsdde(1,2) = xnu
-         ! ddsdde(2,1) = xnu
-         ! ddsdde(2,2) = 1.d0
-         ! ddsdde(3,3) = 0.5d0*(1.d0-xnu)
-         ! ddsdde = ddsdde*E/( (1.d0+xnu*xnu) )
-         write(6,*) 'Plane stress'
+         write(6,*) ' Plane stress is not supported '
       else ! 3D
-         ! ddsdde(1,1) = 1.d0-xnu
-         ! ddsdde(1,2) = xnu
-         ! ddsdde(1,3) = xnu
-         ! ddsdde(2,1) = xnu
-         ! ddsdde(2,2) = 1.d0-xnu
-         ! ddsdde(2,3) = xnu
-         ! ddsdde(3,1) = xnu
-         ! ddsdde(3,2) = xnu
-         ! ddsdde(3,3) = 1.d0-xnu
-         ! ddsdde(4,4) = 0.5d0*(1.d0-2.d0*xnu)
-         ! ddsdde(5,5) = ddsdde(4,4)
-         ! ddsdde(6,6) = ddsdde(4,4)
-         ! ddsdde = ddsdde*E/( (1.d0+xnu)*(1.d0-2.d0*xnu) )
-         write(6,*) '3D Analysis'
-         K = pt*(1.D0 - 2.D0*xnu)*(1.D0+e0)/((1.D0+xnu)*G)
 
-         evol = sum(STRAN(1:3)+DSTRAN(1:3))
-         edev(1:3) = STRAN(1:3)+DSTRAN(1:3) - evol/3.D0
-         edev(4:6) = 0.5d0*(STRAN(4:6)+DSTRAN(4:6))
+!     Defining state variables for internal stresses for maxwell elements
+      do i = 1,NTENS*nb
+         SOLD(i) = STATEV(i)
+      enddo
 
-         stress = 2.D0*G*edev
-         stress(1:3)=stress(1:3)+pt*(1.D0-exp(-(1.D0+d0)*evol/K))/3.D0
-   
-         Kb = pt*(1.D0+e0)*exp(-(1.D0+e0)*evol/K)/(3.D0*K)-2.D0*G/3.D0
-   
-         do j=1,3
-            DDSDDE(j,j) = DDSDDE(j,j) + 2.D0*G
+      WRITE(6,*)'BEGINNING FORTRAN SUBROUTINE'
+      WRITE(6,*) NDI, NSHR, NTENS, NSTATEV, NPROPS
+      WRITE(6,*)'nb'
+      WRITE(6,*) nb
+
+!     Jacobian Matrix
+!
+      do k1=1,NTENS
+         do k2=1, NTENS
+            DDSDDE(k1,k2) = 0.D0
          enddo
-   
-         do j=4,6
-            DDSDDE(j,j) = DDSDDE(j,j) + G
+      enddo
+!
+!     DEFINING THE TERMS TO BE USED IN STIFFNESS MATRIX
+!
+      TERM1_0=PROPS(3)+(4.D0*PROPS(2))/3.D0
+      TERM2_0=PROPS(3)-(2.D0*PROPS(2))/3.D0
+!
+!     Defining the elastic stiffness matrix
+!
+      do k1=1,NTENS
+         do k2=1,NTENS
+            G(k1,k2)=0.D0
          enddo
-   
-         DDSDDE(1:3, 1:3) = DDSDDE(1:3,1:3) + Kb
+      enddo
+      do k1=1,NDI
+         G(k1,k1)=TERM1_0
+      enddo
+      do k1=2,NDI
+         N=k1-1
+         do k2=1,N
+            G(k2,k1)=TERM2_0
+            G(k1,k2)=TERM2_0
+      enddo
+      enddo
+      N2=NDI
+      M=N2+1
+      do k1=M,NTENS
+         G(K1,K1)=PROPS(2)
+      enddo
+!
+!     Defining stress and strain for main branch
+!
+      S(1) = G(1,1)*DSTRAN(1)+G(1,2)*DSTRAN(2)+G(1,3)*DSTRAN(3)+
+     1 SOLD(1)
+      S(2) = G(2,1)*DSTRAN(1)+G(2,2)*DSTRAN(2)+G(2,3)*DSTRAN(3)+
+     1 SOLD(2)
+      S(3) = G(3,1)*DSTRAN(1)+G(3,2)*DSTRAN(2)+G(3,3)*DSTRAN(3)+
+     1 SOLD(3)
+      S(4) = G(4,4)*DSTRAN(4) + SOLD(4)
+      S(5) = G(5,5)*DSTRAN(5) + SOLD(5)
+      S(6) = G(6,6)*DSTRAN(6) + SOLD(6)
+
+      do k1=1,NTENS
+         do k2=1,NTENS
+            DDSDDE(k1,k2)=DDSDDE(k1,k2)+G(k1,k2)
+         enddo
+      enddo
+
+      do k1=1,NTENS
+         STRESS(k1) = S(k1)
+      enddo
+
+      do i=2,nb
+         WRITE(6,*)'BEGINNING OF VISCO TERMS PROPS(3*i-1) PROPS(3*i-2)'
+         WRITE(6,*) PROPS(3*i-1), PROPS(3*i-2)
+
+         TERM1=PROPS(3*i-1)+(4.D0*PROPS(3*i-2))/3.D0
+         TERM2=PROPS(3*i-1)-(2.D0*PROPS(3*i-2))/3.D0
+         do k1=1,NTENS
+            do k2=1,NTENS
+               G(k1,k2)=0.D0
+            enddo
+         enddo
+         do k1=1,NDI
+            G(k1,k1)=TERM1
+         enddo
+         do k1=2,NDI
+            N=k1-1
+            do k2=1,N
+               G(k2,k1)=TERM2
+               G(k1,k2)=TERM2
+            enddo
+         enddo
+         N2=NDI
+         M=N2+1
+         do k1=M,NTENS
+            G(K1,K1)=PROPS(3*i-2)
+         enddo
+
+         A_N = (1.D0 - 0.5D0*(DTIME/PROPS(3*i)))
+         A_D = (1.D0 + 0.5D0*(DTIME/PROPS(3*i)))  ! Because relaxation time is constant
+
+      S(i*NTENS-5)=(G(1,1)*DSTRAN(1)+G(1,2)*DSTRAN(2)+G(1,3)*DSTRAN(3)+
+     1 A_N*SOLD(i*NTENS - 5))/A_D
+      S(i*NTENS-4)=(G(2,1)*DSTRAN(1)+G(2,2)*DSTRAN(2)+G(2,3)*DSTRAN(3)+
+     1 A_N*SOLD(i*NTENS - 4))/A_D
+      S(i*NTENS-3)=(G(3,1)*DSTRAN(1)+G(3,2)*DSTRAN(2)+G(3,3)*DSTRAN(3)+
+     1 A_N*SOLD(i*NTENS - 3))/A_D
+      S(i*NTENS-2) = (G(4,4)*DSTRAN(4) + A_N*SOLD(i*NTENS - 2))/A_D
+      S(i*NTENS-1) = (G(5,5)*DSTRAN(5) + A_N*SOLD(i*NTENS - 1))/A_D
+      S(i*NTENS) = (G(6,6)*DSTRAN(6) + A_N*SOLD(i*NTENS))/A_D
+
+      do k1=1,NTENS
+         do k2=1,NTENS
+            DDSDDE(k1,k2)=DDSDDE(k1,k2)+G(k1,k2)/A_D
+         enddo
+      enddo
+
+      STRESS(1) = STRESS(1) + S(i*NTENS-5)
+      STRESS(2) = STRESS(2) + S(i*NTENS-4)
+      STRESS(3) = STRESS(3) + S(i*NTENS-3)
+      STRESS(4) = STRESS(4) + S(i*NTENS-2)
+      STRESS(5) = STRESS(5) + S(i*NTENS-1)
+      STRESS(6) = STRESS(6) + S(i*NTENS)
+      enddo
+!
+!
+!     Printing the values for M1, M2, M3, Term1, Term2
+
+      WRITE(6,*)'THIS IS A TEST'
+      WRITE(6,*) NDI, NSHR, NTENS, NSTATEV, NPROPS
+      WRITE(6,*)'values for A1N, A1D, Term1_0, Term2_0,Term1_1,Term2_1'
+      WRITE(6,*) TERM1_0, TERM2_0
+!
+      WRITE (6,*) 'OUTPUT OF RESULTS FOR STRAN AND STRESS'
+      WRITE (6,*) STRAN(1), STRAN(2),STRAN(3)
+      WRITE (6,*) STRESS(1), STRESS(2), STRESS(3), STRESS(4)
+      WRITE (6,*) STRESS(5), STRESS(6)
+
+
+
+!     NOW THE STATE VARAIBLES WILL BE UPDATED
+
+      do k1=1,nb*NTENS
+         STATEV(k1)=S(k1)
+      enddo
+
+      WRITE (6,*) 'OUTPUT OF RESULTS FOR STATEV'
+      WRITE (6,*) STATEV(1), STATEV(2), STATEV(3)
+      WRITE (6,*) STATEV(7), STATEV(8), STATEV(9)
+      WRITE (6,*) STATEV(10), STATEV(11), STATEV(12)
+
+!
       endif
 !
 !     NOTE: ABAQUS uses engineering shear strains,
 !     i.e. stran(ndi+1) = 2*e_12, etc...
-      ! do i = 1,ntens
-      ! do j = 1,ntens
-      !    stress(i) = stress(i) + ddsdde(i,j)*dstran(j)
-      ! end do
-      ! end do
 
       RETURN
-      END subroutine UMAT_HYPO
+      END subroutine UMAT

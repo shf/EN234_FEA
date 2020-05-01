@@ -8,8 +8,8 @@ program en234fea
   character (len=200) :: VS_root_folder
   character (len=200) :: Eclipse_root_folder
 
-
-  VS_root_folder = '/mnt/c/Users/shayanfa/Desktop/FortranExample/EN234_FEA/EN234_FEA/'   ! This should work with Intel Studio on the remote desktop if you follow the instructions for cloning your EN234FEA fork 
+! Change root folder to root folder of your project
+  VS_root_folder = '/mnt/c/Users/shaya/Desktop/EN234_FEA/EN234_FEA/'
 
   root_directory = VS_root_folder
     
@@ -31,7 +31,7 @@ program en234fea
 !
 !   Small strain linear elasticity - the UEL is in Abaqus_uel_3d.for
 !   infil = 'input_files/Abaqus_uel_linear_elastic_3d.in'
-!   outfil = 'Output_files/Abaqus_uel_linear_elastic_3d.out'
+!   outfil = 'Output_Files/Abaqus_uel_linear_elastic_3d.out'
 
 !   Linear elastic plate with a central hole using an ABAQUS UEL
 !   infil = 'input_files/Abaqus_uel_holeplate_3d.in'
@@ -122,13 +122,17 @@ program en234fea
 !   outfil = 'Output_files/Abaqus_vumat_McCormick.out'
 
 !   Homework 10 - Continuum beam element solution to end loaded cantilever beam
-   infil = 'input_files/Abaqus_uel_continuum_beam.in'
-   outfil = 'Output_files/Abaqus_uel_continuum_beam.out'
+!   infil = 'input_files/Abaqus_uel_continuum_beam.in'
+!   outfil = 'Output_files/Abaqus_uel_continuum_beam.out'
 
 
 !   Finite Strain BBar
 !  infil = 'input_files/Abaqus_uel_hyperelastic.in'
 !  outfil = 'Output_files/Abaqus_uel_hyperelastic.out'
+
+!  Viscoelastic Umat
+   infil = 'input_files/Abaqus_umat_viscoelastic_3d.in'
+   outfil = 'Output_files/Abaqus_umat_viscoelastic_3d.out'
 
    infil = trim(root_directory)//trim(infil)
    outfil = trim(root_directory)//trim(outfil)
@@ -153,9 +157,8 @@ program en234fea
    write(6,*) ' Program completed successfully '
 
    stop
-  
+
   500 write(6,*) ' Error opening input or output file!'
- 
 
   
   

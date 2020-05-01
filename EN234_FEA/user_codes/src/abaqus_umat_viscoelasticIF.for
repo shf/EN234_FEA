@@ -3,7 +3,7 @@
 !
 !
 
-      SUBROUTINE UMAT_HYPO(STRESS,STATEV,DDSDDE,SSE,SPD,SCD,
+      SUBROUTINE UMAT_IF(STRESS,STATEV,DDSDDE,SSE,SPD,SCD,
      1 RPL,DDSDDT,DRPLDE,DRPLDT,
      2 STRAN,DSTRAN,TIME,DTIME,TEMP,DTEMP,PREDEF,DPRED,CMNAME,
      3 NDI,NSHR,NTENS,NSTATV,PROPS,NPROPS,COORDS,DROT,PNEWDT,
@@ -24,6 +24,9 @@
      2 STRAN(NTENS),DSTRAN(NTENS),TIME(2),PREDEF(1),DPRED(1),
      3 PROPS(NPROPS),COORDS(3),DROT(3,3),DFGRD0(3,3),DFGRD1(3,3)
 
+       DIMENSION D(3,3), SM1OLD(6), SM2OLD(6), SM3OLD(6),
+     1 SM1(6), SM2(6), SM3(6), SM1DOT(6), SM2DOT(6), SM3DOT(6), G(6,6) 
+       REAL*8 M1, M2, M3
 !
 !      Relevant manual sections:
 !
@@ -248,93 +251,204 @@
 
 !      user coding to define DDSDDE, STRESS, STATEV, SSE, SPD, SCD
 !      and, if necessary, RPL, DDSDDT, DRPLDE, DRPLDT, PNEWDT
+
+!    PROPS(1) THROUGH PROPS(3) ARE THE SHEAR MODULI IN PASCALS
+!    MU0=PROPS(1)=14.59E3
+!    MU1=PROPS(2)=11.87E3
+!    MU2=PROPS(3)=41.35E3
+!    MU3=PROPS(4)=19.75E3
 !
-!     Local variables
-
-      double precision :: edev(6)
-      double precision :: evol
-      double precision :: G, xnu, e0, pt, K, Kb
-      
-      integer :: j
-
-      DDSDDE(1:6, 1:6) = 0.d0
-      edev(1:6) = 0.D0
-      evol = 0.D0
-
-      G = PROPS(1)
-      xnu = PROPS(2)
-      e0 = PROPS(3)
-      pt = PROPS(4)
+!    PROPS(5) THROUGH PROPS(7) ARE THE RELAXATION TIMES IN SECONDS
+!    TAU1=PROPS(5)=960.4
+!    TAU2=PROPS(6)=1.044
+!    TAU3=PROPS(7)=19.3
+!    PROPS(8) IS THE BULK MODULUS OF THE MATERIAL=10^3*PROPS(1)
+!    PROPS(8)=14590E3
+!
 
 !    for debugging, you can use
 !      write(6,*) ' Hello '
 !    Output is then written to the .dat file
 
+!    local variables
+      integer :: i
+      integer :: k1, k2, N, N2, M
+
       If (ndi==3 .and. nshr==1) then    ! Plane strain or axisymmetry
-         ! ddsdde(1,1) = 1.d0-xnu
-         ! ddsdde(1,2) = xnu
-         ! ddsdde(1,3) = xnu
-         ! ddsdde(2,1) = xnu
-         ! ddsdde(2,2) = 1.d0-xnu
-         ! ddsdde(2,3) = xnu
-         ! ddsdde(3,1) = xnu
-         ! ddsdde(3,2) = xnu
-         ! ddsdde(3,3) = 1.d0-xnu
-         ! ddsdde(4,4) = 0.5d0*(1.d0-2.d0*xnu)
-         ! ddsdde = ddsdde*E/( (1.d0+xnu)*(1.d0-2.d0*xnu) )
-         write(6,*) 'Plane strain or axisymmetry'
+         write(6,*) ' Plane strain or axisymmetry is not supported '
       else if (ndi==2 .and. nshr==1) then   ! Plane stress
-         ! ddsdde(1,1) = 1.d0
-         ! ddsdde(1,2) = xnu
-         ! ddsdde(2,1) = xnu
-         ! ddsdde(2,2) = 1.d0
-         ! ddsdde(3,3) = 0.5d0*(1.d0-xnu)
-         ! ddsdde = ddsdde*E/( (1.d0+xnu*xnu) )
-         write(6,*) 'Plane stress'
+         write(6,*) ' Plane stress is not supported '
       else ! 3D
-         ! ddsdde(1,1) = 1.d0-xnu
-         ! ddsdde(1,2) = xnu
-         ! ddsdde(1,3) = xnu
-         ! ddsdde(2,1) = xnu
-         ! ddsdde(2,2) = 1.d0-xnu
-         ! ddsdde(2,3) = xnu
-         ! ddsdde(3,1) = xnu
-         ! ddsdde(3,2) = xnu
-         ! ddsdde(3,3) = 1.d0-xnu
-         ! ddsdde(4,4) = 0.5d0*(1.d0-2.d0*xnu)
-         ! ddsdde(5,5) = ddsdde(4,4)
-         ! ddsdde(6,6) = ddsdde(4,4)
-         ! ddsdde = ddsdde*E/( (1.d0+xnu)*(1.d0-2.d0*xnu) )
-         write(6,*) '3D Analysis'
-         K = pt*(1.D0 - 2.D0*xnu)*(1.D0+e0)/((1.D0+xnu)*G)
 
-         evol = sum(STRAN(1:3)+DSTRAN(1:3))
-         edev(1:3) = STRAN(1:3)+DSTRAN(1:3) - evol/3.D0
-         edev(4:6) = 0.5d0*(STRAN(4:6)+DSTRAN(4:6))
+!     Defining state variables for internal stresses for maxwell elements
+         do i = 1,ntens
+            SM1OLD(i) = STATEV(i)
+         enddo
+         do i = 1,ntens
+            SM2OLD(i) = STATEV(i+ntens)
+         enddo
+         do i = 1,ntens
+            SM3OLD(i) = STATEV(i+2*ntens)
+         enddo
 
-         stress = 2.D0*G*edev
-         stress(1:3)=stress(1:3)+pt*(1.D0-exp(-(1.D0+d0)*evol/K))/3.D0
-   
-         Kb = pt*(1.D0+e0)*exp(-(1.D0+e0)*evol/K)/(3.D0*K)-2.D0*G/3.D0
-   
-         do j=1,3
-            DDSDDE(j,j) = DDSDDE(j,j) + 2.D0*G
+!     Defining the values for m1, M2, and M3
+
+      M1=(PROPS(5)*PROPS(2)-
+     1   PROPS(5)*PROPS(2)*EXP(-DTIME/PROPS(5)))/(PROPS(1)*DTIME)
+      M2=(PROPS(6)*PROPS(3)-
+     1   PROPS(6)*PROPS(3)*EXP(-DTIME/PROPS(6)))/(PROPS(1)*DTIME)
+      M3=(PROPS(7)*PROPS(4)-
+     1   PROPS(7)*PROPS(4)*EXP(-DTIME/PROPS(7)))/(PROPS(1)*DTIME)
+            
+!     DEFINING THE TERMS TO BE USED IN STIFFNESS MATRIX
+
+      TERM1=PROPS(8)+(4.D0*PROPS(1))/3.D0
+      TERM2=PROPS(8)-(2.D0*PROPS(1))/3.D0
+!
+      A1=EXP(-DTIME/PROPS(5))
+      A2=EXP(-DTIME/PROPS(6))
+      A3=EXP(-DTIME/PROPS(7))
+!
+!     Printing the values for M1, M2, M3, Term1, Term2
+
+      WRITE(6,*)'THIS IS A TEST'
+      WRITE(6,*) NDI, NSHR, NTENS, NSTATEV, NPROPS
+      WRITE(6,*)'values for M1,M2,M3, Term1, Term2'
+      WRITE(6,*) M1, M2, M3, TERM1, TERM2
+
+!     DEFINING THE ELASTIC STIFFNESS MATRIX FOR THE NEO-HOOKEAN ELEMENT
+!
+      do k1=1,NTENS
+         do K2=1,NTENS
+            G(k1,k2)=0.D0
          enddo
-   
-         do j=4,6
-            DDSDDE(j,j) = DDSDDE(j,j) + G
-         enddo
-   
-         DDSDDE(1:3, 1:3) = DDSDDE(1:3,1:3) + Kb
+      enddo
+      do k1=1,NDI
+         G(k1,k1)=TERM1
+      enddo
+      do k1=2,NDI
+         N=k1-1
+         do k2=1,N
+            G(k2,k1)=TERM2
+            G(k1,k2)=TERM2
+      enddo
+      enddo
+      N2=NDI
+      M=N2+1
+      do k1=M,NTENS
+         G(K1,K1)=PROPS(1)
+      enddo
+
+!     DEFINING STRESS AND STRAIN RELATION
+!     
+      STRESS(1)=G(1,1)*STRAN(1)+G(1,2)*STRAN(2)+G(1,3)*STRAN(3)+
+     1 SM1OLD(1)+SM2OLD(1)+SM3OLD(1)+
+     2 (1+M1+M2+M3)*(G(1,1)*DSTRAN(1)+
+     3 G(1,2)*DSTRAN(2)+G(1,3)*DSTRAN(3))
+      STRESS(2)=G(2,1)*STRAN(1)+G(2,2)*STRAN(2)+G(2,3)*STRAN(3)+
+     1 SM1OLD(2)+SM2OLD(2)+SM3OLD(2)+
+     2 (1+M1+M2+M3)*(G(2,1)*DSTRAN(1)+G(2,2)*DSTRAN(2)
+     3 +G(2,3)*DSTRAN(3))
+      STRESS(3)=G(3,1)*STRAN(1)+G(3,2)*STRAN(2)+G(3,3)*STRAN(3)+
+     1 SM1OLD(3)+SM2OLD(3)+SM3OLD(3)+
+     2 (1+M1+M2+M3)*(G(3,1)*DSTRAN(1)+G(3,2)*DSTRAN(2)+
+     3 G(3,3)*DSTRAN(3))
+      STRESS(4)=G(4,4)*STRAN(4)+SM1OLD(4)+SM2OLD(4)+SM3OLD(4)
+     1 +(1+M1+M2+M3)*(G(4,4)*DSTRAN(4))
+      STRESS(5)=G(5,5)*STRAN(5)+SM1OLD(5)+SM2OLD(5)+SM3OLD(5)
+     1 +(1+M1+M2+M3)*(G(5,5)*DSTRAN(5))
+      STRESS(6)=G(6,6)*STRAN(6)+SM1OLD(6)+SM2OLD(6)+SM3OLD(6)
+     1 +(1+M1+M2+M3)*(G(6,6)*DSTRAN(6))
+
+      WRITE (6,*) 'OUTPUT OF RESULTS FOR STRAN AND STATEV'
+      WRITE (6,*) STRAN(1), STRAN(2),STRAN(3), SM1OLD(1)
+      WRITE (6,*) SM2OLD(1), SM3OLD(1), SM1OLD(2), SM2OLD(2)
+      WRITE (6,*) SM3OLD(2), SM1OLD(3), SM2OLD(3), SM3OLD(3)
+      WRITE (6,*) STRESS(1), STRESS(2), STRESS(3), STRESS(4)
+      WRITE (6,*) STRESS(5), STRESS(6)
+
+!     NOW THE STATE VARAIBLES WILL BE UPDATED
+!
+!
+      SM1(1)=SM1OLD(1)+M1*(G(1,1)*DSTRAN(1)+G(1,2)*DSTRAN(2)+
+     1 G(1,3)*DSTRAN(3))
+      SM2(1)=SM2OLD(1)+M2*(G(1,1)*DSTRAN(1)+G(1,2)*DSTRAN(2)+
+     1 G(1,3)*DSTRAN(3))
+      SM3(1)=SM3OLD(1)+M3*(G(1,1)*DSTRAN(1)+G(1,2)*DSTRAN(2)+
+     1 G(1,3)*DSTRAN(3))
+      SM1(2)=SM1OLD(2)+M1*(G(2,1)*DSTRAN(1)+G(2,2)*DSTRAN(2)+
+     1 G(2,3)*DSTRAN(3))
+      SM2(2)=SM2OLD(2)+M2*(G(2,1)*DSTRAN(1)+G(2,2)*DSTRAN(2)+
+     1 G(2,3)*DSTRAN(3))
+      SM3(2)=SM3OLD(2)+M3*(G(2,1)*DSTRAN(1)+G(2,2)*DSTRAN(2)+
+     1 G(2,3)*DSTRAN(3))
+      SM1(3)=SM1OLD(3)+M1*(G(3,1)*DSTRAN(1)+G(3,2)*DSTRAN(2)+
+     1 G(3,3)*DSTRAN(3))
+      SM2(3)=SM2OLD(3)+M2*(G(3,1)*DSTRAN(1)+G(3,2)*DSTRAN(2)+
+     1 G(3,3)*DSTRAN(3))
+      SM3(3)=SM3OLD(3)+M3*(G(3,1)*DSTRAN(1)+G(3,2)*DSTRAN(2)+
+     1 G(3,3)*DSTRAN(3))
+      SM1(4)=SM1OLD(4)+M1*(G(4,4)*DSTRAN(4))
+      SM2(4)=SM2OLD(4)+M2*(G(4,4)*DSTRAN(4))
+      SM3(4)=SM3OLD(4)+M3*(G(4,4)*DSTRAN(4))
+      SM1(5)=SM1OLD(5)+M1*(G(5,5)*DSTRAN(5))
+      SM2(5)=SM2OLD(5)+M2*(G(5,5)*DSTRAN(5))
+      SM3(5)=SM3OLD(5)+M3*(G(5,5)*DSTRAN(5))
+      SM1(6)=SM1OLD(6)+M1*(G(6,6)*DSTRAN(6))
+      SM2(6)=SM2OLD(6)+M2*(G(6,6)*DSTRAN(6))
+      SM3(6)=SM3OLD(6)+M3*(G(6,6)*DSTRAN(6))
+
+!
+!
+      WRITE(6,*) 'THE ITERATION NUMBER IS (KINC,KSTEP)'
+      WRITE(6,*) KINC, KSTEP
+      WRITE(6,*) 'THIS IS ANOTHER TEST'
+      WRITE(6,*) SM1(1), SM2(1), SM3(1)
+
+      do k1=1,NTENS
+         SM1DOT(k1)=EXP(-DTIME/PROPS(5))*SM1(k1)
+         SM2DOT(k1)=EXP(-DTIME/PROPS(6))*SM2(k1)
+         SM3DOT(k1)=EXP(-DTIME/PROPS(7))*SM3(k1)
+      enddo
+!
+!
+!
+!      N2=96
+!      do I=1,NTENS
+!         STATEV(N2+I)=SM1(I);
+!         STATEV(N2+I+6)=SM2(I);
+!         STATEV(N2+I+12)=SM3(I);
+!      enddo
+!
+!
+      WRITE(6,*) 'THE ITERATION NUMBER IS (KINC,KSTEP)'
+      WRITE(6,*) KINC, KSTEP
+      WRITE(6,*)'THE VALUES FOR SM1OLD, SM2OLD, SM3OLD UPDATED'
+      WRITE(6,*) SM1DOT(1), SM2DOT(1), SM3DOT(1)
+      do k1=1,NTENS
+         STATEV(k1)=SM1DOT(k1)
+         STATEV(k1+6)=SM2DOT(k1)
+         STATEV(k1+12)=SM3DOT(k1)
+      enddo
+
+!     CREATING JACCOBIAN MATRIX
+!
+      do k1=1,NTENS
+      do k2=1, NTENS
+         DDSDDE(k1,k2) = 0.D0
+      enddo
+      enddo
+!
+      do k1=1,NTENS
+      do k2=1,NTENS
+         DDSDDE(k1,k2)=(1+M1+M2+M3)*G(k1,k2)
+      enddo
+      enddo
+!
       endif
 !
 !     NOTE: ABAQUS uses engineering shear strains,
 !     i.e. stran(ndi+1) = 2*e_12, etc...
-      ! do i = 1,ntens
-      ! do j = 1,ntens
-      !    stress(i) = stress(i) + ddsdde(i,j)*dstran(j)
-      ! end do
-      ! end do
 
       RETURN
-      END subroutine UMAT_HYPO
+      END subroutine UMAT_IF

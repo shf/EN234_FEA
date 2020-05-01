@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 MOD=$(pwd)/modules
 SRC=$(pwd)/src
